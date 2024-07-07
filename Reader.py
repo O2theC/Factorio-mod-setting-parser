@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def decodeVersion(f):
     nums = []
     for i in range(4):
@@ -48,10 +51,14 @@ def readULong(f):
     return int.from_bytes(f.read(8),"little",signed=False)
 
 def readFloat(f):
-    return np.frombuffer(f.read(4),dtype=np.float32)[0]
+    # return np.float32(f.read(4))
+    return float(np.frombuffer(f.read(4),dtype=np.float32)[0])
 
 def readDouble(f):
-    return np.frombuffer(f.read(8),dtype=np.float64)[0]
+    # return np.float64(f.read(8))
+    # bytess= f.read(8)
+    # print(f"Bytes : {bytess}\nNumpy Conversion : {float(np.frombuffer(bytess,dtype=np.float64)[0])}\nAnd back : {np.float64(float(np.frombuffer(bytess,dtype=np.float64)[0])).tobytes()}\n")
+    return float(np.frombuffer(f.read(8),dtype=np.float64)[0])
 
 def readString(f):
     boo = readBool(f)
@@ -60,7 +67,7 @@ def readString(f):
     length = readUByte(f)
     return f.read(length).decode("utf-8")
 
-def readDict(f : BinaryIO):
+def readDict(f):
     dic = dict()
     # print(f.tell())
     numElements = readUInt(f)
@@ -93,3 +100,16 @@ def readPropTree(f):
         return readList(f)
     elif treeType == 5:
         return readDict(f)
+    
+def readSettings(f):
+    settings = dict()
+    version = decodeVersion(f)
+    # print(f.tell())
+    # print(version)
+    settings["version"] = version
+    # print(f.tell())
+    readBool(f) # who knows why they have it as such
+    # print(f.tell())
+    settings.update(readPropTree(f))
+    return settings
+    # print(f.tell())

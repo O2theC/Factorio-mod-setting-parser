@@ -1,4 +1,7 @@
+import io
+import json
 import os
+
 
 
 class Settings:
@@ -7,6 +10,27 @@ class Settings:
         self.version = [0,0,0,0]
         self.settings = {"version": [0,0,0,0]}
         
+    @staticmethod
+    def fromData(bytes):
+        """
+        Creates a Settings object from binary data
+
+        Args:
+            bytes (bytes): The bytes containing the mod settings
+
+        Returns:
+            Settings: A Settings object with the settings from the bytes.
+        """
+        import Reader
+        # Create a Settings object
+        settings = Settings()
+        data = io.BytesIO(bytes)
+        settings.settings = Reader.readSettings(data)
+        settings.version = settings.settings["version"]
+        
+        
+        return settings
+
 
     @staticmethod
     def fromFile(file):
@@ -23,18 +47,23 @@ class Settings:
         if not os.path.exists(file):
             raise FileNotFoundError(f"File not found: {file}")
         
-        # Create a Settings object
-        settings = Settings()
+        # Create a Settings objec
+        settings = None
         
         # Read the file
-        with open(file, 'r') as f:
-            # Read the version
-            version = int(f.readline())
-            settings.version = version
-
-            # Read the settings
-            for line in f:
-                key_value = line.split(':')
-                settings.settings[key_value[0].strip()] = key_value[1].strip()
-
+        with open(file, 'rb') as f:
+            settings = Settings.fromData(f.read())
         return settings
+    
+    
+    
+    def getSettingsJson(self):
+        return self.settings
+    
+    def toBinaryData(self):
+        import Writer
+        return Writer.encodeSettings(self)
+    
+    def toBinaryFile(self, file):
+        with open(file, 'wb') as f:
+            f.write(self.toBinaryData())
